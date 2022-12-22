@@ -232,18 +232,10 @@ git checkout pipelines
 
 ---
 
-## Login to cluster
-
-```bash
-oc login
-```
-
----
-
 ## Locate Datapower pipeline source
 
 ```bash
-cd $HOME/git/datapower/dp01-src/pipelines/dev-build
+cd pipelines/dev-build
 ls
 ```
 
