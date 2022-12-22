@@ -227,7 +227,6 @@ Note:
 ## Work on pipelines
 
 ```bash
-cd dp01-src
 git checkout pipelines
 ```
 
