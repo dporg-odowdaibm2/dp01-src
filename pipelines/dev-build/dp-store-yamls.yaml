@@ -1,0 +1,41 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: dp-store-yamls
+  namespace: dp01-ci
+spec:
+  workspaces:
+    - name: source
+      description: Store DataPower YAMLs
+  steps:
+    - name: echo
+      image: alpine
+      script: |
+        #!/bin/sh
+        echo "hello from dp-store-yamls task"
+
+        # Navigate to workspace
+        cd $(workspaces.source.path)/repo/main
+
+        # Admin secret applies to virtual appliance
+        cp admin-secret.yaml $(workspaces.source.path)/repo/ops/environments/dev/dp01/.
+
+        # List YAMLs for each gateway. TODO: Iterate over gateways
+        cd gateways/gateway01/yamls
+
+        # Make target folder
+        mkdir -p $(workspaces.source.path)/repo/ops/environments/dev/dp01/gateway01
+
+        # Copy fixed YAMLs to datapower gitops repo
+        cp gateway.yaml $(workspaces.source.path)/repo/ops/environments/dev/dp01/gateway01/.
+        cp booking-service-ingress.yaml $(workspaces.source.path)/repo/ops/environments/dev/dp01/gateway01/.
+        cp booking-service-service.yaml $(workspaces.source.path)/repo/ops/environments/dev/dp01/gateway01/.
+        cp gateway-webui-service.yaml $(workspaces.source.path)/repo/ops/environments/dev/dp01/gateway01/.
+
+        # Copy generated kubernetes artefacts to datapower gitops repo
+        cp booking-service-local.yaml $(workspaces.source.path)/repo/ops/environments/dev/dp01/gateway01/.
+        cp booking-service-config.yaml $(workspaces.source.path)/repo/ops/environments/dev/dp01/gateway01/.
+        cp booking-service-secret1.yaml $(workspaces.source.path)/repo/ops/environments/dev/dp01/gateway01/.
+        cp booking-service-secret2.yaml $(workspaces.source.path)/repo/ops/environments/dev/dp01/gateway01/.
+        cp booking-service-secret3.yaml $(workspaces.source.path)/repo/ops/environments/dev/dp01/gateway01/.
+

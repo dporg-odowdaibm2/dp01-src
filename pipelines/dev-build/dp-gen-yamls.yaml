@@ -1,0 +1,47 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: dp-gen-yamls
+  namespace: dp01-ci
+spec:
+  workspaces:
+    - name: source
+      description: Generate DataPower YAMLs
+  steps:
+    - name: echo
+      image: alpine
+      script: |
+        #!/bin/sh
+        echo "hello from dp-gen-yamls task"
+
+        # install curl and openssl; they are not included in Alpine by default
+        apk update && apk add --no-cache curl openssl
+
+        # install kubectl
+        curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+        chmod +x ./kubectl
+        mv ./kubectl /usr/local/bin
+        kubectl version --client
+
+        # Generate Kubernetes artefacts from corresponding source artefacts
+        cd $(workspaces.source.path)/repo/main
+
+        # Create datapower admin password; encode as a secret
+        kubectl create secret generic admin-secret -n dp01-dev --from-literal=KEY=passw0rd --dry-run=client -o yaml > admin-secret.yaml
+
+        # Build YAMLs for each gateway. TODO: Iterate over all gateways
+        cd gateways/gateway01
+
+        # Create configmaps containing datapower config and local
+        kubectl create configmap booking-service-config -n dp01-dev --from-file=config/BookingServiceBackend.cfg --dry-run=client -o yaml > yamls/booking-service-config.yaml
+        tar -czvf BookingServiceBackend.tar.gz  ./local/BookingServiceBackend
+        kubectl create configmap booking-service-local -n dp01-dev --from-file=./BookingServiceBackend.tar.gz --dry-run=client -o yaml > yamls/booking-service-local.yaml
+
+        # Create key used by Booking service MPGW; encode as secrets
+        openssl req -x509 -newkey rsa:4096 -keyout Alice-privkey.pem -out Alice-sscert.pem -sha256 -days 365 -nodes -subj '/CN=dummy.domain.com'
+        kubectl create secret generic booking-service-secret1 -n dp01-dev --from-file=Alice-sscert.pem --from-file=Alice-privkey.pem --dry-run=client -o yaml > yamls/booking-service-secret1.yaml
+        openssl req -x509 -newkey rsa:4096 -keyout BookingApplication-privkey.pem -out BookingApplication-sscert.pem -sha256 -days 365 -nodes -subj '/CN=dummy.domain.com'
+        kubectl create secret generic booking-service-secret2 -n dp01-dev --from-file=BookingApplication-privkey.pem --from-file=BookingApplication-sscert.pem --dry-run=client -o yaml > yamls/booking-service-secret2.yaml
+        openssl enc -aes-256-cbc -pbkdf2 -k secret -P -md sha1 | sed -n "/key/ s/key=//p" > aes256-sharesecret-1.txt
+        kubectl create secret generic booking-service-secret3 -n dp01-dev --from-file=aes256-sharesecret-1.txt --dry-run=client -o yaml > yamls/booking-service-secret3.yaml
+

@@ -1,0 +1,25 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: dp-test
+  namespace: dp01-ci
+spec:
+  workspaces:
+    - name: source
+      description: Tests DataPower
+  steps:
+    - name: echo
+      image: alpine
+      script: |
+        #!/bin/sh
+        echo "hello from dp-test task"
+
+        # List DataPower YAMLs
+        cd $(workspaces.source.path)/repo/main
+
+        # List admin-secret YAML for virtual appliance
+        ls -alt admin-secret.yaml
+
+        # List YAMLs for each gateway. TODO: Iterate over gateways
+        cd gateways/gateway01/yamls
+        ls -alt *.yaml
