@@ -68,8 +68,9 @@ spec:
         docker://$(params.IMAGE)
       cat /tmp/image-digest | tee $(results.IMAGE_DIGEST.path)
       echo "$(params.IMAGE)" | tee $(results.IMAGE_URL.path)
-#    securityContext:
-#      privileged: true
+    securityContext:
+      capabilities:
+        add: ["SETFCAP"]
     volumeMounts:
     - mountPath: /var/lib/containers
       name: varlibcontainers
