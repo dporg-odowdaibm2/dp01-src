@@ -277,5 +277,11 @@ tkn pipelinerun logs dp-dev-pipeline-run-xxxxx -n dp01-dev -f
 
 ## View pipelinerun in the web console
 
+## Update ingress
+
+When does this happen?
+* We have to have a YAML
+* This should be generated in the pipeline.
+
 
 
